@@ -323,9 +323,9 @@ while True:
 
     t1_3 = cv2.getTrackbarPos("canny_thr1_3", "sliders")
     t2_3 = cv2.getTrackbarPos("canny_thr2_3", "sliders")
-    print(">>>>>>>>>>", np.shape(Bin), "<<<<<<<<")
+    # print(">>>>>>>>>>", np.shape(Bin), "<<<<<<<<")
     canny_binary = cv2.Canny(Bin, t1_3, t2_3)
-    print(">>>>>>>>>>", np.shape(canny_binary), "<<<<<<<<")
+    # print(">>>>>>>>>>", np.shape(canny_binary), "<<<<<<<<")
 
     # cv2.imshow("canny on canny",canny2)
     cv2.imshow("canny on otsu",canny_binary)
