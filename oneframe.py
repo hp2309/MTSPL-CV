@@ -24,6 +24,7 @@ if os.path.splitext(args.input)[1] != ".bag":
 pipeline = rs.pipeline()
 config = rs.config()
 rs.config.enable_device_from_file(config, args.input)
+# rs.config.enable_device_from_file(config, "dc1.bag")
 pipeline.start(config)
 
 colorizer = rs.colorizer(float(2))
@@ -183,6 +184,10 @@ for x in range(10):
 
 pipeline.stop()
 print("Frames Captured")
+preprocessed = np.asanyarray(colorizer.colorize(frames[0]).get_data())
+preprocessed = cv2.resize(preprocessed,(425,240))
+
+cv2.imshow("before pre-processing", preprocessed)
 
 decimation = rs.decimation_filter()
 spatial = rs.spatial_filter()
@@ -203,9 +208,12 @@ for x in range(10):
 #np.savetxt("E:\\INTERN\\code\\after_processing.csv", np.asanyarray(frames[-1].get_data()), delimiter=',')
 colorized_depth = np.asanyarray(colorizer.colorize(frame).get_data())
 
+print(f"type of frame: {type(frames[0])}")
 
 #frame = pipeline.wait_for_frames()
-cv2.imshow("colorized_depth", colorized_depth)
+cv2.imshow("after pre-processing", colorized_depth)
+
+
 depthf = frame
 
 #depthf = hole_filling.process(depthf)
@@ -263,16 +271,20 @@ while True:
     scale = cv2.getTrackbarPos("scale", "sliders")
     newdepthd = np.subtract(depthd,correctionmatrix*scale)
     cv2.imshow("Correction Matrix",correctionmatrix)
-    # cv2.imshow("depthc", depthc)
-    # cv2.imshow("alt", alt)
     alp = float(cv2.getTrackbarPos("alp", "sliders")/100.0)
     beta = float(cv2.getTrackbarPos("beta", "sliders")*(-1))
-    gray = cv2.cvtColor(cv2.applyColorMap(cv2.convertScaleAbs(newdepthd, alpha=alp, beta=beta), cv2.COLORMAP_BONE), cv2.COLOR_BGR2GRAY)
     t1_1 = cv2.getTrackbarPos("canny_thr1_1", "sliders")
     t2_1 = cv2.getTrackbarPos("canny_thr2_1", "sliders")
     ks = cv2.getTrackbarPos("mediankSize", "sliders")*2 +1
+    
+    
+    
+    gray = cv2.cvtColor(cv2.applyColorMap(cv2.convertScaleAbs(newdepthd, alpha=alp, beta=beta), cv2.COLORMAP_BONE), cv2.COLOR_BGR2GRAY)
     gray = cv2.medianBlur(gray, ks)
     canny = cv2.Canny(gray, t1_1, t2_1)
+    
+    # cv2.imshow("depthc", depthc)
+    # cv2.imshow("alt", alt)
     
     source = gray
     m = cv2.getTrackbarPos("thr", "sliders")
