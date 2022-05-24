@@ -322,7 +322,7 @@ while True:
     # plt.plot(hist_median)
     # plt.show()
 
-
+    
     cv2.rectangle(gray, (340,50),(370,80),(0,255,0),2)
     cv2.imshow("depthframe",gray)
     masked_image = cv2.bitwise_and(gray, Bin)
@@ -367,9 +367,6 @@ while True:
         avg_th1 = find_depth2(largestContour, originaldepth, ground_depth, 15)
         avg_th2, med_th, avg_th3, avg_th4 = find_depth(largestContour, ground_depth, originaldepth, Bin, 13, 5, 15)
         print("Area: " + "%.3f" % (cv2.contourArea(largestContour)*(measurement_scale**2)) + " mm2\tPerimeter: " + "%.3f" % (cv2.arcLength(largestContour, True)*measurement_scale) + " mm\tThickness: " + "%.3f" % avg_th1 + " | " + "%.3f" % avg_th2 + " | " + "%.3f" % avg_th3 + " | " + "%.3f" % avg_th4)
-        # print(largestContour[4][0][1])
-        #cv2.imwrite('E:\\INTERN\\code\\gray.png', gray)
         cv2.destroyAllWindows()
         break
 
-    #mode
