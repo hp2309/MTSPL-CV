@@ -24,11 +24,10 @@ if os.path.splitext(args.input)[1] != ".bag":
 pipeline = rs.pipeline()
 config = rs.config()
 rs.config.enable_device_from_file(config, args.input)
-# rs.config.enable_device_from_file(config, "dc1.bag")
 pipeline.start(config)
 
 colorizer = rs.colorizer(float(2))
-# altframe = rs.frame()
+
 def nothing(x):
     pass
 
@@ -131,12 +130,6 @@ def find_depth(points, ground_depth, depth_data, binary, k_size, skip_freq, slic
 
     return avg_th2, med_th, avg_th3, avg_th4
 
-    #median
-    # med_w = white_list[len(white_list)//2]
-    # med_b = black_list[len(black_list)//2]
-
-    # med_thickness = med_b - med_w
-
 
 def find_depth2(edge, depth_data, ground_depth, slice_ratio):
     depths = list()
@@ -195,7 +188,6 @@ temporal = rs.temporal_filter()
 hole_filling = rs.hole_filling_filter()
 depth_to_disparity = rs.disparity_transform(True)
 disparity_to_depth = rs.disparity_transform(False)
-#np.savetxt("E:\\INTERN\\code\\raw_camera_depth_data.csv", np.asanyarray(frames[-1].get_data()), delimiter=',')
 for x in range(10):
     frame = frames[x]
     frame = decimation.process(frame)
@@ -205,42 +197,23 @@ for x in range(10):
     frame = disparity_to_depth.process(frame)
     frame = hole_filling.process(frame)
 
-#np.savetxt("E:\\INTERN\\code\\after_processing.csv", np.asanyarray(frames[-1].get_data()), delimiter=',')
 colorized_depth = np.asanyarray(colorizer.colorize(frame).get_data())
 
 print(f"type of frame: {type(frames[0])}")
 
-#frame = pipeline.wait_for_frames()
 cv2.imshow("after pre-processing", colorized_depth)
 
 
 depthf = frame
 
-#depthf = hole_filling.process(depthf)
 depthd = np.asanyarray(depthf.get_data())
 depthd = depthd[10:230, 30:420]
-#np.savetxt("E:\\INTERN\\code\\after_cropping_to_220x390.csv", depthd, delimiter=',')
-# pipeline.stop()
 ground = depthd[50:80, 340:370]
-# print("ground")
-# print(ground)
 ground_depth = np.average(ground)
-# for i in range(50,60):
-#     for j in range(10,30):
-#         depthd[i][j] = 200
-
 
 depthc = np.asanyarray(colorizer.colorize(depthf).get_data())
 cv2.imshow("Colorized Depth Frame", depthc)
-# depthc2 = np.asanyarray(colorizer.colorize(depthd).get_data())
 
-# alt = np.asanyarray(colorizer.colorize(depthf).get_data())
-
-
-# file1 = open("gray.txt","w")
-
-# file1.write(str(depthc.tolist()))
-# file1.close()
 min = 1000
 max = 1
 originaldepth = np.copy(depthd)
@@ -251,18 +224,14 @@ for x in np.nditer(depthd, op_flags=['readonly']):
         max = int(x)
 
 delta  = max-min
-# print(depthd)
 for i in range(depthd.shape[0]):
     for j in range(depthd.shape[1]):
         depthd[i][j] = int(254*((max-int(depthd[i][j]))/delta))+1
-# print(str(min) + "  " + str(max))
-# print(depthd)
 
 correctionmatrix = correctionMatrix(np.ones(depthd.shape, np.float32), 1, 0)
 
 flag = False
 
-# print(correctionmatrix)
 print(">> Ground Depth : " + str(ground_depth))
 
 measurement_scale = 655/221
@@ -283,17 +252,13 @@ while True:
     gray = cv2.medianBlur(gray, ks)
     canny = cv2.Canny(gray, t1_1, t2_1)
     
-    # cv2.imshow("depthc", depthc)
-    # cv2.imshow("alt", alt)
     
     source = gray
     m = cv2.getTrackbarPos("thr", "sliders")
     (thresh, Bin) = cv2.threshold(source, m, 255, cv2.THRESH_BINARY)
-    #(thresh, otsu) = cv2.threshold(source, m, 255, cv2.THRESH_OTSU)
     cv2.imshow("Binary",Bin)
     (cnts, _) = cv2.findContours(Bin, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
     
-    #getting largest contour
     index = 0
     if (len(cnts) != 0):
         largestContour = cnts[0]
@@ -309,58 +274,23 @@ while True:
     Bin_WithContour = cv2.drawContours(cv2.cvtColor(Bin,cv2.COLOR_GRAY2RGB), cnts, index, (0,255,0), 1)
     t = 2
     x, y, a, b = cv2.boundingRect(largestContour)
-    # print(a,b)
     isConvex = cv2.isContourConvex(largestContour)
     cv2.rectangle(Bin_WithContour, (x, y), (x + a - t, y + b - t), (0,0,255), t)
-    # cv2.circle(Bin_WithContour, (237,22), 4, (255,255,0), 2)
     cv2.imshow("Binary with contour", Bin_WithContour)
     
-    #print(cv2.boundingRect(largestContour))
-    #cv2.imshow("OTSU",otsu)
-
-    # hist_median = cv2.calcHist([otsu], [0], None, [256], [0,256])
-    # plt.plot(hist_median)
-    # plt.show()
-
     
     cv2.rectangle(gray, (340,50),(370,80),(0,255,0),2)
     cv2.imshow("depthframe",gray)
     masked_image = cv2.bitwise_and(gray, Bin)
     cv2.imshow("masked image", masked_image)
-    # cv2.imshow("canny",canny)
-
-    # t1_2 = cv2.getTrackbarPos("canny_thr1_2", "sliders")
-    # t2_2 = cv2.getTrackbarPos("canny_thr2_2", "sliders")
-    # canny2 = cv2.Canny(canny, t1_2, t2_2)
 
     t1_3 = cv2.getTrackbarPos("canny_thr1_3", "sliders")
     t2_3 = cv2.getTrackbarPos("canny_thr2_3", "sliders")
-    # print(">>>>>>>>>>", np.shape(Bin), "<<<<<<<<")
     canny_binary = cv2.Canny(Bin, t1_3, t2_3)
-    # print(">>>>>>>>>>", np.shape(canny_binary), "<<<<<<<<")
 
-    # cv2.imshow("canny on canny",canny2)
     cv2.imshow("canny on otsu",canny_binary)
     
     depth_list = list()
-
-    # ground_truth = 638
-    # print(type(Bin))
-    # for i in range(Bin.shape[0]):
-        # for j in range(Bin.shape[1]):
-            # if int(Bin[i][j]) == 255:
-                # if int(depthd[i][j]) != 0:
-                    # depth_list.append(depthd[i][j])
-
-    # depth_list.sort()
-    # select_index = int(len(depth_list)/10)
-
-    # sum = 0
-#     for i in range(select_index):
-#         sum+=depth_list[i]
-#     avg_depth = sum/select_index
-#     diff = ground_truth - avg_depth
-#     #print("diff : " + str(diff) + " avg_depth" + str(avg_depth))
 
     key = cv2.waitKey(1)
     if key == 27:
